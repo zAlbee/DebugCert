@@ -39,6 +39,8 @@
 
 import java.net.Proxy;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.net.InetSocketAddress;
 import javax.net.ssl.*;
 import java.io.*;
@@ -134,6 +136,16 @@ public class DebugCert {
         context.init(null, new TrustManager[]{tm}, null);
         SSLSocketFactory factory = context.getSocketFactory();
 
+        if (tryHandshake(host, port, useProxy, proxyHost, proxyPort, underlying, factory)) {
+            System.out.println();
+            System.out.println("No errors, certificate is already trusted");
+        }
+
+        printChain(tm.chain);
+    }
+
+    private static boolean tryHandshake(String host, int port, boolean useProxy, String proxyHost, int proxyPort,
+	    Socket underlying, SSLSocketFactory factory) throws IOException, UnknownHostException, SocketException {
         System.out.println("Opening connection to " + host + ":" + port + (useProxy ? (" via proxy "+proxyHost+":"+proxyPort) : "") + " ...");
         SSLSocket socket;
         if (useProxy) {
@@ -146,15 +158,14 @@ public class DebugCert {
         try {
             System.out.println("Starting SSL handshake...");
             socket.startHandshake();
-            socket.close();
-            System.out.println();
-            System.out.println("No errors, certificate is already trusted");
+            return true;
         } catch (SSLException e) {
             System.out.println();
             e.printStackTrace(System.out);
+            return false;
+        } finally {
+            socket.close();
         }
-
-        printChain(tm.chain);
     }
 
     private static void printChain(X509Certificate[] chain) throws NoSuchAlgorithmException, CertificateEncodingException {
