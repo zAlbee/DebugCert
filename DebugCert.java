@@ -51,7 +51,7 @@ import java.security.cert.X509Certificate;
  * Class used to add the server's certificate to the KeyStore
  * with your trusted certificates.
  */
-public class InstallCert {
+public class DebugCert {
 
     public static void main(String[] args) throws Exception {
 
@@ -96,7 +96,7 @@ public class InstallCert {
         }
 
         if (invalidArgs) {
-            System.out.println("Usage: java InstallCert [--proxy=proxyHost:proxyPort] host[:port] [passphrase] [--quiet]");
+            System.out.println("Usage: java DebugCert [--proxy=proxyHost:proxyPort] host[:port] [passphrase]");
             return;
         }
 
