@@ -136,17 +136,36 @@ public class DebugCert {
         context.init(null, new TrustManager[]{tm}, null);
         SSLSocketFactory factory = context.getSocketFactory();
 
+        System.out.println("Opening connection to " + host + ":" + port + (useProxy ? (" via proxy "+proxyHost+":"+proxyPort) : "") + " ...");
+
         if (tryHandshake(host, port, useProxy, proxyHost, proxyPort, underlying, factory)) {
             System.out.println();
             System.out.println("No errors, certificate is already trusted");
+            printChain(tm.chain);
+        } else {
+            System.out.println("Failed on first try!");
+            printChain(tm.chain);
+            return;
         }
 
-        printChain(tm.chain);
+        int N = 100;
+        System.out.printf("Retrying %d times\n", N);
+
+        for (int i=0; i<N; i++) {
+            System.out.printf("%d ", i+1);
+            if (!tryHandshake(host, port, useProxy, proxyHost, proxyPort, underlying, factory)) {
+        	System.out.println();
+        	System.out.printf("FAILURE on try %d!\n", i+1);
+                printChain(tm.chain);
+        	break;
+            }
+        }
+        System.out.println();
+        System.out.println("Complete.");
     }
 
     private static boolean tryHandshake(String host, int port, boolean useProxy, String proxyHost, int proxyPort,
 	    Socket underlying, SSLSocketFactory factory) throws IOException, UnknownHostException, SocketException {
-        System.out.println("Opening connection to " + host + ":" + port + (useProxy ? (" via proxy "+proxyHost+":"+proxyPort) : "") + " ...");
         SSLSocket socket;
         if (useProxy) {
             underlying.connect(new InetSocketAddress(host, port));
