@@ -69,7 +69,6 @@ public class InstallCert {
         int numArg = 0;
         int nbArgs = args.length;
         boolean invalidArgs = false;
-        boolean isQuiet = false;
         while (numArg < nbArgs) {
             String arg = args[numArg++];
             if (arg.startsWith("--proxy=")) {
@@ -78,9 +77,6 @@ public class InstallCert {
                 String[] c = proxy.split(":");
                 proxyHost = c[0];
                 proxyPort = Integer.parseInt(c[1]);  // proxy port is mandatory (we don't default to 8080)
-            }
-            else if (arg.startsWith("--quiet")) {
-                isQuiet = true;
             }
             else if (host == null) {  // 1st argument is the "host:port"
                 String[] c = arg.split(":");
@@ -162,8 +158,6 @@ public class InstallCert {
             return;
         }
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
         System.out.println();
         System.out.println("Server sent " + chain.length + " certificate(s):");
         System.out.println();
@@ -179,35 +173,6 @@ public class InstallCert {
             System.out.println("   md5     " + toHexString(md5.digest()));
             System.out.println();
         }
-
-        int k;
-        if (isQuiet) {
-            System.out.println("Adding first certificate to trusted keystore");
-            k = 0;
-        }
-        else {
-            System.out.println("Enter certificate to add to trusted keystore or 'q' to quit: [1]");
-            String line = reader.readLine().trim();
-            try {
-                k = (line.length() == 0) ? 0 : Integer.parseInt(line) - 1;
-            } catch (NumberFormatException e) {
-                System.out.println("KeyStore not changed");
-                return;
-            }
-        }
-
-        X509Certificate cert = chain[k];
-        String alias = host + "-" + (k + 1);
-        ks.setCertificateEntry(alias, cert);
-
-        OutputStream out = new FileOutputStream("jssecacerts");
-        ks.store(out, passphrase);
-        out.close();
-
-        System.out.println();
-        System.out.println(cert);
-        System.out.println();
-        System.out.println("Added certificate to keystore 'jssecacerts' using alias '" + alias + "'");
     }
 
     private static final char[] HEXDIGITS = "0123456789abcdef".toCharArray();
