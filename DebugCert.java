@@ -70,6 +70,8 @@ public class DebugCert {
         InetSocketAddress proxyAddr  = null;
         Socket            underlying = null;
 
+        int               numRetries = 0;
+
         int numArg = 0;
         int nbArgs = args.length;
         boolean invalidArgs = false;
@@ -81,6 +83,10 @@ public class DebugCert {
                 String[] c = proxy.split(":");
                 proxyHost = c[0];
                 proxyPort = Integer.parseInt(c[1]);  // proxy port is mandatory (we don't default to 8080)
+            }
+            else if (arg.startsWith("--n=")) {
+                String valStr = arg.substring("--n=".length());
+                numRetries = Integer.valueOf(valStr);
             }
             else if (host == null) {  // 1st argument is the "host:port"
                 String[] c = arg.split(":");
@@ -100,7 +106,7 @@ public class DebugCert {
         }
 
         if (invalidArgs) {
-            System.out.println("Usage: java DebugCert [--proxy=proxyHost:proxyPort] host[:port] [passphrase]");
+            System.out.println("Usage: java DebugCert [--proxy=proxyHost:proxyPort] host[:port] [passphrase] [--n=numRetries]");
             return;
         }
 
@@ -148,11 +154,10 @@ public class DebugCert {
             return;
         }
 
-        int N = 100;
-        System.out.printf("Retrying %d times\n", N);
+        System.out.printf("Retrying %d times\n", numRetries);
 
-        for (int i=0; i<N; i++) {
-            System.out.printf("%d ", i+1);
+        for (int i=0; i<numRetries; i++) {
+            System.out.printf("%d/%d ", i+1, numRetries);
             if (!tryHandshake(host, port, useProxy, proxyHost, proxyPort, underlying, factory)) {
         	System.out.println();
         	System.out.printf("FAILURE on try %d!\n", i+1);
